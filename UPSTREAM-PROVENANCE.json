@@ -22,7 +22,10 @@
     "Recovered legacy /search links through query-preserving canonical /shop redirect and exact seeded CTA repair",
     "Repaired inherited React render/effect synchronization and ESM lint errors without disabling rules",
     "Theme reflects system/storage changes through an external-store subscription; gallery/menu/address selections retain user changes",
-    "Login redirect constrained to a local path"
+    "Login redirect constrained to a local path",
+    "Strict Stripe TEST webhook signature validation and exact fixture-owned transaction matching",
+    "Reused Payload order/cart/transaction mechanism with atomic PostgreSQL advisory transaction locks and once-only inventory settlement",
+    "Independent TEST payment status/amount/customer/cart snapshot checks and idempotent paid/refunded order recovery"
   ],
   "dataPolicy": "Synthetic catalog/customer/order data only; no real payment or physical shipment"
 }

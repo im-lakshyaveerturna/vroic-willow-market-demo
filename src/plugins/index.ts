@@ -8,7 +8,7 @@ import { ecommercePlugin } from '@payloadcms/plugin-ecommerce'
 
 import { assertDemoStripeKeys } from '@/utilities/demo-payment-policy'
 
-import { stripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
+import { demoStripeAdapter, withDemoStripeConfirmation } from '@/utilities/demo-stripe'
 
 import { Page, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -30,6 +30,8 @@ const generateURL: GenerateURL<Product | Page> = ({ doc }) => {
 }
 
 assertDemoStripeKeys(process.env)
+
+const demoStripe = demoStripeAdapter({ secretKey: process.env.STRIPE_SECRET_KEY!, publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, webhookSecret: process.env.STRIPE_WEBHOOKS_SIGNING_SECRET! })
 
 export const plugins: Plugin[] = [
   ...(process.env.BLOB_READ_WRITE_TOKEN ? [vercelBlobStorage({ collections: { media: true }, token: process.env.BLOB_READ_WRITE_TOKEN })] : []),
@@ -82,7 +84,7 @@ export const plugins: Plugin[] = [
       },
     },
   }),
-  ecommercePlugin({
+  withDemoStripeConfirmation(ecommercePlugin({
     access: {
       adminOnlyFieldAccess,
       adminOrPublishedStatus,
@@ -123,15 +125,11 @@ export const plugins: Plugin[] = [
     },
     payments: {
       paymentMethods: [
-        stripeAdapter({
-          secretKey: process.env.STRIPE_SECRET_KEY!,
-          publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-          webhookSecret: process.env.STRIPE_WEBHOOKS_SIGNING_SECRET!,
-        }),
+        demoStripe,
       ],
     },
     products: {
       productsCollectionOverride: ProductsCollection,
     },
-  }),
+  }), demoStripe.confirmHandler),
 ]
