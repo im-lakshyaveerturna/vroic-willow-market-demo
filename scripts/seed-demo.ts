@@ -11,8 +11,8 @@ const req = { context: { disableRevalidate: true } }
 const richText = (text: string) => ({ root: { type: 'root', version: 1, direction: 'ltr' as const, format: '' as const, indent: 0, children: [{ type: 'paragraph', version: 1, direction: 'ltr' as const, format: '' as const, indent: 0, children: [{ type: 'text', version: 1, text, detail: 0, format: 0, mode: 'normal', style: '' }] }] } })
 const find = async (collection: 'products' | 'categories' | 'pages' | 'media' | 'users', field: string, value: string) => (await payload.find({ collection, where: { [field]: { equals: value } }, limit: 1, depth: 0 })).docs[0]
 // This seed is additive and refuses an unrelated catalog. It never clears collections or orders.
-const existing = await payload.find({ collection: 'products', limit: 1, depth: 0 })
-if (existing.docs.some(doc => !catalog.products.some(product => product.slug === doc.slug))) throw new Error('Unrelated catalog: refuse demo seeding')
+const existing = await payload.find({ collection: 'products', limit: catalog.products.length + 1, depth: 0 })
+if (existing.totalDocs > catalog.products.length || existing.docs.some(doc => !catalog.products.some(product => product.slug === doc.slug))) throw new Error('Unrelated catalog: refuse demo seeding')
 if (!await find('users', 'email', 'operator@willow-market.example')) await payload.create({ collection: 'users', data: { email: 'operator@willow-market.example', name: 'Willow Demo Operator', roles: ['admin'], password: process.env.DEMO_ADMIN_PASSWORD } })
 const categoryIDs = new Map<string, number>()
 for (const title of catalog.categories) {
@@ -52,8 +52,10 @@ const pages = [
   ['contact', 'Contact Willow Market', 'This demonstration has no external customer support recipient. Use your Vroic Task for qualification questions; do not submit personal or sensitive information.'],
 ] as const
 for (const [slug, title, body] of pages) if (!await find('pages', 'slug', slug)) await payload.create({ collection: 'pages', context: req.context, data: { slug, title, _status: 'published', hero: { type: 'lowImpact', richText: richText(title), links: [{ link: { type: 'custom', url: '/search', label: 'Shop the demo catalog', appearance: 'default' } }] }, layout: [{ blockType: 'content', columns: [{ size: 'full', richText: richText(body) }] }] } })
-await payload.updateGlobal({ slug: 'header', context: req.context, data: { navItems: [{ link: { type: 'custom', url: '/search', label: 'Shop' } }, { link: { type: 'custom', url: '/about', label: 'Our story' } }] } })
-await payload.updateGlobal({ slug: 'footer', context: req.context, data: { navItems: pages.slice(1).map(([slug, title]) => ({ link: { type: 'custom' as const, url: `/${slug}`, label: title } })) } })
+const header = await payload.findGlobal({ slug: 'header', depth: 0 })
+if (!header.navItems?.length) await payload.updateGlobal({ slug: 'header', context: req.context, data: { navItems: [{ link: { type: 'custom', url: '/search', label: 'Shop' } }, { link: { type: 'custom', url: '/about', label: 'Our story' } }] } })
+const footer = await payload.findGlobal({ slug: 'footer', depth: 0 })
+if (!footer.navItems?.length) await payload.updateGlobal({ slug: 'footer', context: req.context, data: { navItems: pages.slice(1).map(([slug, title]) => ({ link: { type: 'custom' as const, url: `/${slug}`, label: title } })) } })
 const counts = await Promise.all(['products', 'categories', 'variants', 'pages'].map(async collection => ({ collection, count: (await payload.count({ collection: collection as 'products' })).totalDocs })))
 console.log(JSON.stringify({ fixture: 'Willow Market', counts, realCharges: 0, messagesSent: 0, destructiveChanges: 0 }))
 await payload.destroy()
