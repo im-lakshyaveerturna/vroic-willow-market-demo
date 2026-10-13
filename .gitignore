@@ -45,3 +45,6 @@ public/media
 artifacts/
 test-results/
 private/
+
+.playwright-cli/
+output/playwright/

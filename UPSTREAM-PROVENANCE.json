@@ -25,7 +25,9 @@
     "Login redirect constrained to a local path",
     "Strict Stripe TEST webhook signature validation and exact fixture-owned transaction matching",
     "Reused Payload order/cart/transaction mechanism with atomic PostgreSQL advisory transaction locks and once-only inventory settlement",
-    "Independent TEST payment status/amount/customer/cart snapshot checks and idempotent paid/refunded order recovery"
+    "Independent TEST payment status/amount/customer/cart snapshot checks and idempotent paid/refunded order recovery",
+    "Bounded catalog pagination so all20 synthetic products remain browsable with search/sort/category retained",
+    "Moved inherited favicon to public routing and added original Willow SVG icon to resolve observed404s"
   ],
   "dataPolicy": "Synthetic catalog/customer/order data only; no real payment or physical shipment"
 }
