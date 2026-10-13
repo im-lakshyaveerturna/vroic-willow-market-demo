@@ -2,6 +2,7 @@
 
 import { Media } from '@/components/Media'
 import { Message } from '@/components/Message'
+import { paymentErrorCode } from '@/utilities/demo-payment-policy'
 import { Price } from '@/components/Price'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,10 +27,10 @@ import { FormItem } from '@/components/forms/FormItem'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
-const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
-const stripe = loadStripe(apiKey)
+const apiKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+const stripe = apiKey?.startsWith('pk_test_') ? loadStripe(apiKey) : null
 
-export const CheckoutPage: React.FC = () => {
+export const CheckoutPage: React.FC<{ paymentConfigured: boolean }> = ({ paymentConfigured }) => {
   const { user } = useAuth()
   const router = useRouter()
   const { cart } = useCart()
@@ -78,6 +79,7 @@ export const CheckoutPage: React.FC = () => {
 
   const initiatePaymentIntent = useCallback(
     async (paymentID: string) => {
+      if (!paymentConfigured || !stripe) return
       try {
         const paymentData = (await initiatePayment(paymentID, {
           additionalData: {
@@ -91,10 +93,10 @@ export const CheckoutPage: React.FC = () => {
           setPaymentData(paymentData)
         }
       } catch (error) {
-        const errorData = error instanceof Error ? JSON.parse(error.message) : {}
+        const code = error instanceof Error ? paymentErrorCode(error.message) : undefined
         let errorMessage = 'An error occurred while initiating payment.'
 
-        if (errorData?.cause?.code === 'OutOfStock') {
+        if (code === 'OutOfStock') {
           errorMessage = 'One or more items in your cart are out of stock.'
         }
 
@@ -102,10 +104,10 @@ export const CheckoutPage: React.FC = () => {
         toast.error(errorMessage)
       }
     },
-    [billingAddress, billingAddressSameAsShipping, shippingAddress],
+    [billingAddress, billingAddressSameAsShipping, email, initiatePayment, paymentConfigured, shippingAddress],
   )
 
-  if (!stripe) return null
+  if (!paymentConfigured || !stripe) return <section className="py-12" role="status"><h1 className="text-2xl font-medium">Demo checkout setup pending</h1><p>This store’s Stripe TEST payment setup is incomplete. No order has been placed and no charge has been made.</p></section>
 
   if (cartIsEmpty && isProcessingPayment) {
     return (

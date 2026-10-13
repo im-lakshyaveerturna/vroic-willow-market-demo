@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { assertDemoStripeKeys } from '../src/utilities/demo-payment-policy.ts'
+import { assertDemoStripeKeys, demoPaymentConfigured, paymentErrorCode } from '../src/utilities/demo-payment-policy.ts'
 
 test('demo refuses live Stripe secret and publishable keys before payment adapter use', () => {
   assert.throws(() => assertDemoStripeKeys({ STRIPE_SECRET_KEY: 'sk_live_synthetic' }), /TEST secret/)
@@ -20,4 +20,13 @@ test('fictional catalog is substantial and internally consistent', async () => {
     assert.ok(Number.isInteger(product.inventory) && product.inventory > 0)
     assert.match(product.description, /fictional/)
   }
+})
+
+test('missing TEST configuration stays unavailable and provider text errors remain recoverable', () => {
+  assert.equal(demoPaymentConfigured({}), false)
+  assert.equal(demoPaymentConfigured({ STRIPE_SECRET_KEY: 'sk_test_synthetic', NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_synthetic' }), false)
+  assert.equal(demoPaymentConfigured({ STRIPE_SECRET_KEY: 'sk_test_synthetic', NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_synthetic', STRIPE_WEBHOOKS_SIGNING_SECRET: 'whsec_synthetic' }), true)
+  assert.equal(paymentErrorCode('Network request failed'), undefined)
+  assert.equal(paymentErrorCode('null'), undefined)
+  assert.equal(paymentErrorCode('{"cause":{"code":"OutOfStock"}}'), 'OutOfStock')
 })
