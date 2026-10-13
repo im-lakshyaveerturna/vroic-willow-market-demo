@@ -55,17 +55,12 @@ export const CheckoutPage: React.FC<{ paymentConfigured: boolean }> = ({ payment
     (email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress),
   )
 
-  // On initial load wait for addresses to be loaded and check to see if we can prefill a default one
-  useEffect(() => {
-    if (!shippingAddress) {
-      if (addresses && addresses.length > 0) {
-        const defaultAddress = addresses[0]
-        if (defaultAddress) {
-          setBillingAddress(defaultAddress)
-        }
-      }
-    }
-  }, [addresses])
+  // Prefill once after saved addresses arrive, without overwriting a shopper's selection.
+  const [addressesPrefilled, setAddressesPrefilled] = useState(false)
+  if (!addressesPrefilled && addresses?.length) {
+    setAddressesPrefilled(true)
+    if (!billingAddress) setBillingAddress(addresses[0])
+  }
 
   useEffect(() => {
     return () => {

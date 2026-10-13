@@ -39,11 +39,14 @@ export function MobileMenu({ menu }: Props) {
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [isOpen])
+  }, [])
 
-  useEffect(() => {
+  const location = `${pathname}?${searchParams}`
+  const [previousLocation, setPreviousLocation] = useState(location)
+  if (previousLocation !== location) {
+    setPreviousLocation(location)
     setIsOpen(false)
-  }, [pathname, searchParams])
+  }
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>

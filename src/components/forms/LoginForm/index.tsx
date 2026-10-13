@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 
 type FormData = {
@@ -20,7 +20,8 @@ type FormData = {
 export const LoginForm: React.FC = () => {
   const searchParams = useSearchParams()
   const allParams = searchParams.toString() ? `?${searchParams.toString()}` : ''
-  const redirect = useRef(searchParams.get('redirect'))
+  const requestedRedirect = searchParams.get('redirect')
+  const redirect = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : '/account'
   const { login } = useAuth()
   const router = useRouter()
   const [error, setError] = React.useState<null | string>(null)
@@ -35,13 +36,12 @@ export const LoginForm: React.FC = () => {
     async (data: FormData) => {
       try {
         await login(data)
-        if (redirect?.current) router.push(redirect.current)
-        else router.push('/account')
+        router.push(redirect)
       } catch (_) {
         setError('There was an error with the credentials provided. Please try again.')
       }
     },
-    [login, router],
+    [login, router, redirect],
   )
 
   return (

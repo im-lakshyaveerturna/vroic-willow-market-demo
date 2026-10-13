@@ -14,7 +14,7 @@ import { ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 
 import { DeleteItemButton } from './DeleteItemButton'
 import { EditItemQuantityButton } from './EditItemQuantityButton'
@@ -28,10 +28,11 @@ export function CartModal() {
 
   const pathname = usePathname()
 
-  useEffect(() => {
-    // Close the cart modal when the pathname changes.
+  const [previousPathname, setPreviousPathname] = useState(pathname)
+  if (previousPathname !== pathname) {
+    setPreviousPathname(pathname)
     setIsOpen(false)
-  }, [pathname])
+  }
 
   const totalQuantity = useMemo(() => {
     if (!cart || !cart.items || !cart.items.length) return undefined

@@ -21,7 +21,7 @@
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "seed:demo": "tsx scripts/seed-demo.ts",
-    "test:demo": "node --test tests/demo-policy.test.mjs"
+    "test:demo": "node --test tests/demo-policy.test.mjs tests/demo-link-repair.test.mjs"
   },
   "dependencies": {
     "@payloadcms/admin-bar": "3.80.0",
@@ -100,11 +100,6 @@
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp"
-    ]
   },
   "packageManager": "pnpm@11.8.0"
 }

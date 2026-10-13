@@ -18,7 +18,11 @@
     "Additive idempotent synthetic seed without deletion",
     "Postgres numeric-ID generated types and typed cart item callbacks",
     "Corrected upstream theme selector type and flat ESLint config compatibility",
-    "Next16 webpack build preserving upstream extension mapping"
+    "Next16 webpack build preserving upstream extension mapping",
+    "Recovered legacy /search links through query-preserving canonical /shop redirect and exact seeded CTA repair",
+    "Repaired inherited React render/effect synchronization and ESM lint errors without disabling rules",
+    "Theme reflects system/storage changes through an external-store subscription; gallery/menu/address selections retain user changes",
+    "Login redirect constrained to a local path"
   ],
   "dataPolicy": "Synthetic catalog/customer/order data only; no real payment or physical shipment"
 }

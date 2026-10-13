@@ -8,7 +8,6 @@ import { useSearchParams } from 'next/navigation'
 import React, { useEffect } from 'react'
 
 import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/components/ui/carousel'
-import { DefaultDocumentIDType } from 'payload'
 
 type Props = {
   gallery: NonNullable<Product['gallery']>
@@ -16,36 +15,22 @@ type Props = {
 
 export const Gallery: React.FC<Props> = ({ gallery }) => {
   const searchParams = useSearchParams()
-  const [current, setCurrent] = React.useState(0)
+  const [current, setCurrent] = React.useState(() => {
+    const selected = gallery.findIndex(item => item.variantOption && Array.from(searchParams.values()).includes(String(typeof item.variantOption === 'object' ? item.variantOption.id : item.variantOption)))
+    return selected === -1 ? 0 : selected
+  })
+  const query = searchParams.toString()
+  const [previousQuery, setPreviousQuery] = React.useState(query)
+  if (previousQuery !== query) {
+    setPreviousQuery(query)
+    const selected = gallery.findIndex(item => item.variantOption && Array.from(searchParams.values()).includes(String(typeof item.variantOption === 'object' ? item.variantOption.id : item.variantOption)))
+    if (selected !== -1) setCurrent(selected)
+  }
   const [api, setApi] = React.useState<CarouselApi>()
 
-  useEffect(() => {
-    if (!api) {
-      return
-    }
-  }, [api])
+  useEffect(() => { api?.scrollTo(current, true) }, [api, current])
 
-  useEffect(() => {
-    const values = Array.from(searchParams.values())
-
-    if (values && api) {
-      const index = gallery.findIndex((item) => {
-        if (!item.variantOption) return false
-
-        let variantID: DefaultDocumentIDType
-
-        if (typeof item.variantOption === 'object') {
-          variantID = item.variantOption.id
-        } else variantID = item.variantOption
-
-        return Boolean(values.find((value) => value === String(variantID)))
-      })
-      if (index !== -1) {
-        setCurrent(index)
-        api.scrollTo(index, true)
-      }
-    }
-  }, [searchParams, api, gallery])
+  if (!gallery.length) return null
 
   return (
     <div>

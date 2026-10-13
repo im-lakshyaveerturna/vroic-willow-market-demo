@@ -1,0 +1,1 @@
+export function repairDemoShopLinks<T extends { link?: { type?: string | null; url?: string | null; label?: string | null } }>(items: T[] | null | undefined, label: string): { changed: boolean; links: T[] | null | undefined }

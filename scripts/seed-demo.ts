@@ -3,6 +3,7 @@ import { getPayload, type Payload } from 'payload'
 import config from '../src/payload.config'
 import sharp from 'sharp'
 import catalog from './demo-catalog.json'
+import { repairDemoShopLinks } from './demo-link-repair.mjs'
 
 if (process.env.DEMO_FIXTURE_DATABASE !== 'true') throw new Error('Explicit isolated demo database required')
 if (!process.env.DEMO_ADMIN_PASSWORD || process.env.DEMO_ADMIN_PASSWORD.length < 24) throw new Error('Managed random demo admin password required')
@@ -51,9 +52,19 @@ const pages = [
   ['terms', 'Demo terms', 'Willow Market is provided solely as an ecommerce product qualification fixture. It is not a merchant accepting real orders, and every product is fictional.'],
   ['contact', 'Contact Willow Market', 'This demonstration has no external customer support recipient. Use your Vroic Task for qualification questions; do not submit personal or sensitive information.'],
 ] as const
-for (const [slug, title, body] of pages) if (!await find('pages', 'slug', slug)) await payload.create({ collection: 'pages', context: req.context, data: { slug, title, _status: 'published', hero: { type: 'lowImpact', richText: richText(title), links: [{ link: { type: 'custom', url: '/search', label: 'Shop the demo catalog', appearance: 'default' } }] }, layout: [{ blockType: 'content', columns: [{ size: 'full', richText: richText(body) }] }] } })
+for (const [slug, title, body] of pages) {
+  const existingPage = (await payload.find({ collection: 'pages', where: { slug: { equals: slug } }, limit: 1, depth: 0 })).docs[0]
+  if (existingPage) {
+    const repair = repairDemoShopLinks(existingPage.hero?.links, 'Shop the demo catalog')
+    if (repair.changed) await payload.update({ collection: 'pages', id: existingPage.id, context: req.context, data: { hero: { ...existingPage.hero, links: repair.links } } })
+    continue
+  }
+  await payload.create({ collection: 'pages', context: req.context, data: { slug, title, _status: 'published', hero: { type: 'lowImpact', richText: richText(title), links: [{ link: { type: 'custom', url: '/shop', label: 'Shop the demo catalog', appearance: 'default' } }] }, layout: [{ blockType: 'content', columns: [{ size: 'full', richText: richText(body) }] }] } })
+}
 const header = await payload.findGlobal({ slug: 'header', depth: 0 })
-if (!header.navItems?.length) await payload.updateGlobal({ slug: 'header', context: req.context, data: { navItems: [{ link: { type: 'custom', url: '/search', label: 'Shop' } }, { link: { type: 'custom', url: '/about', label: 'Our story' } }] } })
+if (!header.navItems?.length) await payload.updateGlobal({ slug: 'header', context: req.context, data: { navItems: [{ link: { type: 'custom', url: '/shop', label: 'Shop' } }, { link: { type: 'custom', url: '/about', label: 'Our story' } }] } })
+const headerRepair = repairDemoShopLinks(header.navItems, 'Shop')
+if (headerRepair.changed) await payload.updateGlobal({ slug: 'header', context: req.context, data: { navItems: headerRepair.links } })
 const footer = await payload.findGlobal({ slug: 'footer', depth: 0 })
 if (!footer.navItems?.length) await payload.updateGlobal({ slug: 'footer', context: req.context, data: { navItems: pages.slice(1).map(([slug, title]) => ({ link: { type: 'custom' as const, url: `/${slug}`, label: title } })) } })
 const counts = await Promise.all(['products', 'categories', 'variants', 'pages'].map(async collection => ({ collection, count: (await payload.count({ collection: collection as 'products' })).totalDocs })))
