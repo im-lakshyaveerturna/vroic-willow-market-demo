@@ -1,0 +1,193 @@
+{
+  "brand": "Willow Market",
+  "categories": [
+    "Desk",
+    "Kitchen",
+    "Travel",
+    "Textiles",
+    "Garden",
+    "Gift sets"
+  ],
+  "products": [
+    {
+      "slug": "oak-desk-tray",
+      "title": "Oak Desk Tray",
+      "category": "Desk",
+      "priceInUSD": 2900,
+      "inventory": 40,
+      "description": "Oak Desk Tray brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": true
+    },
+    {
+      "slug": "brass-pen-stand",
+      "title": "Brass Pen Stand",
+      "category": "Desk",
+      "priceInUSD": 1800,
+      "inventory": 41,
+      "description": "Brass Pen Stand brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": true
+    },
+    {
+      "slug": "linen-notebook-cover",
+      "title": "Linen Notebook Cover",
+      "category": "Desk",
+      "priceInUSD": 2400,
+      "inventory": 42,
+      "description": "Linen Notebook Cover brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": true
+    },
+    {
+      "slug": "cork-mouse-mat",
+      "title": "Cork Mouse Mat",
+      "category": "Desk",
+      "priceInUSD": 1900,
+      "inventory": 43,
+      "description": "Cork Mouse Mat brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": true
+    },
+    {
+      "slug": "stoneware-breakfast-bowl",
+      "title": "Stoneware Breakfast Bowl",
+      "category": "Kitchen",
+      "priceInUSD": 2200,
+      "inventory": 44,
+      "description": "Stoneware Breakfast Bowl brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "amber-glass-carafe",
+      "title": "Amber Glass Carafe",
+      "category": "Kitchen",
+      "priceInUSD": 3400,
+      "inventory": 45,
+      "description": "Amber Glass Carafe brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "walnut-serving-board",
+      "title": "Walnut Serving Board",
+      "category": "Kitchen",
+      "priceInUSD": 3900,
+      "inventory": 46,
+      "description": "Walnut Serving Board brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "cotton-tea-towel-pair",
+      "title": "Cotton Tea Towel Pair",
+      "category": "Kitchen",
+      "priceInUSD": 1600,
+      "inventory": 47,
+      "description": "Cotton Tea Towel Pair brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "canvas-weekend-tote",
+      "title": "Canvas Weekend Tote",
+      "category": "Travel",
+      "priceInUSD": 4800,
+      "inventory": 48,
+      "description": "Canvas Weekend Tote brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "foldable-market-bag",
+      "title": "Foldable Market Bag",
+      "category": "Travel",
+      "priceInUSD": 2100,
+      "inventory": 49,
+      "description": "Foldable Market Bag brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "travel-cutlery-wrap",
+      "title": "Travel Cutlery Wrap",
+      "category": "Travel",
+      "priceInUSD": 1700,
+      "inventory": 50,
+      "description": "Travel Cutlery Wrap brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "pocket-cable-pouch",
+      "title": "Pocket Cable Pouch",
+      "category": "Travel",
+      "priceInUSD": 2300,
+      "inventory": 51,
+      "description": "Pocket Cable Pouch brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "waffle-throw-blanket",
+      "title": "Waffle Throw Blanket",
+      "category": "Textiles",
+      "priceInUSD": 6900,
+      "inventory": 52,
+      "description": "Waffle Throw Blanket brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "linen-cushion-cover",
+      "title": "Linen Cushion Cover",
+      "category": "Textiles",
+      "priceInUSD": 3200,
+      "inventory": 53,
+      "description": "Linen Cushion Cover brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "woven-table-runner",
+      "title": "Woven Table Runner",
+      "category": "Textiles",
+      "priceInUSD": 3700,
+      "inventory": 54,
+      "description": "Woven Table Runner brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "soft-cotton-napkin-set",
+      "title": "Soft Cotton Napkin Set",
+      "category": "Textiles",
+      "priceInUSD": 2600,
+      "inventory": 55,
+      "description": "Soft Cotton Napkin Set brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "terracotta-herb-pot",
+      "title": "Terracotta Herb Pot",
+      "category": "Garden",
+      "priceInUSD": 1400,
+      "inventory": 56,
+      "description": "Terracotta Herb Pot brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "brass-plant-mister",
+      "title": "Brass Plant Mister",
+      "category": "Garden",
+      "priceInUSD": 2800,
+      "inventory": 57,
+      "description": "Brass Plant Mister brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "everyday-desk-gift-set",
+      "title": "Everyday Desk Gift Set",
+      "category": "Gift sets",
+      "priceInUSD": 7400,
+      "inventory": 58,
+      "description": "Everyday Desk Gift Set brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    },
+    {
+      "slug": "slow-morning-gift-set",
+      "title": "Slow Morning Gift Set",
+      "category": "Gift sets",
+      "priceInUSD": 5800,
+      "inventory": 59,
+      "description": "Slow Morning Gift Set brings a simple, considered detail to everyday routines. This fictional product is part of the Willow Market demonstration catalog; no physical item is supplied.",
+      "enableVariants": false
+    }
+  ]
+}

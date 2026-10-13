@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Fictional full-stack ecommerce fixture for Vroic existing GitHub storefront adoption qualification",
+  "upstreamRepository": "https://github.com/payloadcms/payload",
+  "upstreamTag": "v3.80.0",
+  "upstreamCommit": "e90fb963f9456084c70827aa94aa990d45860a96",
+  "upstreamPath": "templates/ecommerce",
+  "license": "MIT",
+  "licensePath": "LICENSE.md",
+  "licenseSha256": "f5622f480e4419ef6be7691d4b04521a5f18365ddedb9a160e92a4b365e94ecd",
+  "changes": [
+    "Pinned published Payload3.80.0 packages and pnpm11.8.0 lockfile",
+    "Fictional Willow Market catalog/branding with20products,6categories,12variants,7pages",
+    "Original generated PNG catalog illustrations",
+    "Upstream-supported Postgres adapter with explicit initial migration and push:false",
+    "Upstream-supported Vercel Blob persistent media adapter",
+    "Stripe TEST-only key guard and site-wide demo disclosure",
+    "Additive idempotent synthetic seed without deletion",
+    "Postgres numeric-ID generated types and typed cart item callbacks",
+    "Corrected upstream theme selector type and flat ESLint config compatibility",
+    "Next16 webpack build preserving upstream extension mapping"
+  ],
+  "dataPolicy": "Synthetic catalog/customer/order data only; no real payment or physical shipment"
+}
