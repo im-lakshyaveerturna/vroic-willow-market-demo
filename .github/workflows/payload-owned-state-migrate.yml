@@ -80,7 +80,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.4.0
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       # Locked dependencies are installed BEFORE any secret is exposed.
