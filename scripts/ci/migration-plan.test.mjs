@@ -162,3 +162,35 @@ test('a non-zero status command is rejected before parsing even with a valid tab
   const okRun = evaluateStatusRun({ ok: true, text: table, registered, ledger: [baselineRow] })
   assert.equal(okRun.ok, true)
 })
+
+// Payload 3.80.0 @payloadcms/drizzle/dist/migrateStatus.js colors each row.
+// console-table-printer 2.12.1 wraps each padded cell independently with
+// ESC[32m/ESC[31m ... ESC[0m, including an unpadded max-width `Yes` cell.
+const coloredStatus = [
+  `│ \x1b[32m${BASELINE_MIGRATION}\x1b[0m │ \x1b[32m1\x1b[0m │ \x1b[32mYes\x1b[0m │`,
+  `│ \x1b[31m${APPROVED_MIGRATION}\x1b[0m │ \x1b[31m \x1b[0m │ \x1b[31m No\x1b[0m │`,
+].join('\n')
+
+test('Payload 3.80 colored green Yes and red No cells agree exactly with ledger', () => {
+  assert.deepEqual(parseMigrationStatus(coloredStatus), {
+    rows: [statusYes(BASELINE_MIGRATION), statusNo(APPROVED_MIGRATION)],
+    ambiguous: false,
+  })
+  assert.deepEqual(evaluateStatusRun({ ok: true, text: coloredStatus, registered, ledger: [baselineRow] }), {
+    ok: true, reason: 'status_ledger_agreement',
+  })
+})
+
+test('terminal normalization preserves command failure and unknown or missing status rejection', () => {
+  assert.deepEqual(evaluateStatusRun({ ok: false, text: coloredStatus, registered, ledger: [baselineRow] }), {
+    ok: false, reason: 'status_command_failed',
+  })
+  for (const text of ['', '\x1b[32mno status table\x1b[0m', coloredStatus.replace('Yes', 'Unknown')]) {
+    assert.deepEqual(evaluateStatusRun({ ok: true, text, registered, ledger: [baselineRow] }), {
+      ok: false, reason: 'ambiguous_status',
+    })
+  }
+  assert.deepEqual(evaluateStatusRun({ ok: true, text: coloredStatus, registered, ledger: [] }), {
+    ok: false, reason: 'status_applied_mismatch',
+  })
+})

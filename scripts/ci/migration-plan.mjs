@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util'
 /**
  * Pure planning/verification helpers for the reviewed additive Payload
  * migration. No I/O: the preflight supplies real Payload status text, the real
@@ -38,7 +39,7 @@ export function registeredInventory(fileNames) {
 export function parseMigrationStatus(text) {
   const rows = []
   let ambiguous = false
-  for (const raw of String(text).split('\n')) {
+  for (const raw of stripVTControlCharacters(String(text)).split('\n')) {
     const named = raw.match(/(\d{8}_\d{6}_[A-Za-z0-9_]+)/)
     if (!named) continue
     const name = named[1]
