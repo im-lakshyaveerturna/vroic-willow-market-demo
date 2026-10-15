@@ -9,8 +9,12 @@ import {
   evaluatePlan,
   evaluatePostMigration,
   evaluateStatusAgreement,
+  evaluateStatusRun,
   isValidRequestId,
   isValidSourceSha,
+  parseColumnRow,
+  parseConstraintRow,
+  parseLedgerRow,
   parseMigrationStatus,
   registeredInventory,
   verifyOwnedSchema,
@@ -126,4 +130,35 @@ test('schema verification requires exact columns/types/nullability and pk/unique
 
   const noUnique = verifyOwnedSchema(buildSchema((_c, cons) => { cons.splice(cons.findIndex((c) => c.table === 'vroic_reorder_policies' && c.type === 'u'), 1) }))
   assert.equal(noUnique.reason, 'missing_unique:vroic_reorder_policies')
+})
+
+// --- regression: a failing INNER process must not leak to the OUTER process --
+test('a failing inner process cannot leak raw stdout/stderr to the parent process', () => {
+  const execUrl = new URL('./exec.mjs', import.meta.url).href
+  const outer = `import(${JSON.stringify(execUrl)}).then(({ runCaptured }) => { const r = runCaptured(process.execPath, ['-e', "process.stdout.write('INNER_OUT');process.stderr.write('INNER_ERR');process.exit(3)"]); if (r.ok !== false || r.stdout !== 'INNER_OUT' || r.stderr !== 'INNER_ERR') process.exit(4); process.stdout.write('DONE') })`
+  const res = runCaptured(process.execPath, ['--input-type=module', '-e', outer])
+  assert.equal(res.ok, true, `outer failed: ${res.stderr}`)
+  assert.equal(res.stdout, 'DONE')
+  assert.equal(res.stderr, '')
+})
+
+// --- regression: real PostgreSQL convalidated::text serialization ------------
+test('constraint row parsing matches PostgreSQL convalidated::text (true/false)', () => {
+  const parsed = parseConstraintRow('vroic_store_settings|c|true|CHECK (singleton)|')
+  assert.deepEqual([parsed.table, parsed.type, parsed.validated, parsed.def], ['vroic_store_settings', 'c', true, 'CHECK (singleton)'])
+  assert.equal(parseConstraintRow('vroic_shipping_config|c|false|CHECK (singleton)|').validated, false)
+  assert.notEqual('true', 't')
+  const ledgerRow = parseLedgerRow('7|20261014_120000_vroic_owned_state|2|2026-10-15 00:00:00+00|2026-10-15 00:00:00+00')
+  assert.deepEqual([ledgerRow.id, ledgerRow.name, ledgerRow.batch], ['7', APPROVED_MIGRATION, 2])
+  const columnRow = parseColumnRow('vroic_returns|items|jsonb|NO')
+  assert.deepEqual([columnRow.table, columnRow.column, columnRow.dataType, columnRow.nullable], ['vroic_returns', 'items', 'jsonb', 'NO'])
+})
+
+// --- regression: status command must succeed BEFORE parsing ------------------
+test('a non-zero status command is rejected before parsing even with a valid table', () => {
+  const table = `| Name | Batch | Ran |\n| ${BASELINE_MIGRATION} | 1 | Yes |\n| ${APPROVED_MIGRATION} |  | No |\n`
+  const failed = evaluateStatusRun({ ok: false, text: table, registered, ledger: [baselineRow] })
+  assert.deepEqual([failed.ok, failed.reason], [false, 'status_command_failed'])
+  const okRun = evaluateStatusRun({ ok: true, text: table, registered, ledger: [baselineRow] })
+  assert.equal(okRun.ok, true)
 })
