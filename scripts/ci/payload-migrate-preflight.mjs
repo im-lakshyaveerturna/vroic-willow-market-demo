@@ -27,10 +27,12 @@ import {
   EXPECTED_TABLES,
   evaluatePlan,
   evaluatePostMigration,
-  evaluateStatusAgreement,
+  evaluateStatusRun,
   isValidRequestId,
   isValidSourceSha,
-  parseMigrationStatus,
+  parseColumnRow,
+  parseConstraintRow,
+  parseLedgerRow,
   registeredInventory,
   verifyOwnedSchema,
 } from './migration-plan.mjs'
@@ -105,32 +107,26 @@ const psql = (sql) => {
   return r.stdout.trim()
 }
 
+const rows = (out) => out.split('\n').map((l) => l.trim()).filter(Boolean)
 const readLedger = () =>
-  psql("select id::text || '|' || name || '|' || batch::text || '|' || created_at::text || '|' || updated_at::text from payload_migrations order by id")
-    .split('\n').map((l) => l.trim()).filter(Boolean)
-    .map((line) => { const [id, name, batch, createdAt, updatedAt] = line.split('|'); return { id, name, batch: Number(batch), createdAt, updatedAt } })
+  rows(psql("select id::text || '|' || name || '|' || batch::text || '|' || created_at::text || '|' || updated_at::text from payload_migrations order by id")).map(parseLedgerRow)
 
 const readColumns = () =>
-  psql("select table_name || '|' || column_name || '|' || data_type || '|' || is_nullable from information_schema.columns where table_schema = 'public' and table_name like 'vroic!_%' escape '!' order by table_name, ordinal_position")
-    .split('\n').map((l) => l.trim()).filter(Boolean)
-    .map((line) => { const [table, column, dataType, nullable] = line.split('|'); return { table, column, dataType, nullable } })
+  rows(psql("select table_name || '|' || column_name || '|' || data_type || '|' || is_nullable from information_schema.columns where table_schema = 'public' and table_name like 'vroic!_%' escape '!' order by table_name, ordinal_position")).map(parseColumnRow)
 
 const readConstraints = () =>
-  psql("select r.relname || '|' || c.contype || '|' || c.convalidated::text || '|' || replace(pg_get_constraintdef(c.oid), chr(10), ' ') || '|' || coalesce((select string_agg(a.attname, ',' order by array_position(c.conkey, a.attnum)) from pg_attribute a where a.attrelid = c.conrelid and a.attnum = any(c.conkey)), '') from pg_constraint c join pg_class r on r.oid = c.conrelid join pg_namespace n on n.oid = r.relnamespace where n.nspname = 'public' and r.relname like 'vroic!_%' escape '!' order by r.relname, c.contype")
-    .split('\n').map((l) => l.trim()).filter(Boolean)
-    .map((line) => { const parts = line.split('|'); return { table: parts[0], type: parts[1], validated: parts[2] === 't', def: parts[3], columns: parts[4] ? parts[4].split(',') : [] } })
+  rows(psql("select r.relname || '|' || c.contype || '|' || c.convalidated::text || '|' || replace(pg_get_constraintdef(c.oid), chr(10), ' ') || '|' || coalesce((select string_agg(a.attname, ',' order by array_position(c.conkey, a.attnum)) from pg_attribute a where a.attrelid = c.conrelid and a.attnum = any(c.conkey)), '') from pg_constraint c join pg_class r on r.oid = c.conrelid join pg_namespace n on n.oid = r.relnamespace where n.nspname = 'public' and r.relname like 'vroic!_%' escape '!' order by r.relname, c.contype")).map(parseConstraintRow)
 
 const runStatus = () => {
   const r = runCaptured('pnpm', ['payload', 'migrate:status'], { env: { ...process.env, NODE_OPTIONS: '--no-deprecation' } })
-  return `${r.stdout}${r.stderr}`
+  return { ok: r.ok, text: `${r.stdout}${r.stderr}` }
 }
 
 // --- BEFORE: normal Payload status + authoritative ledger --------------------
-const statusBefore = parseMigrationStatus(runStatus())
-if (statusBefore.ambiguous) fail('ambiguous_status_before')
 const ledgerBefore = readLedger()
-const agreementBefore = evaluateStatusAgreement({ statusRows: statusBefore.rows, registered, ledger: ledgerBefore })
-if (!agreementBefore.ok) fail(`status_disagreement_before:${agreementBefore.reason}`)
+const statusBefore = runStatus()
+const checkedBefore = evaluateStatusRun({ ok: statusBefore.ok, text: statusBefore.text, registered, ledger: ledgerBefore })
+if (!checkedBefore.ok) fail(`status_before_failed:${checkedBefore.reason}`)
 
 const plan = evaluatePlan({ registered, ledger: ledgerBefore })
 if (plan.state === 'fail') fail(`plan_failed:${plan.reason}`)
@@ -141,11 +137,10 @@ if (plan.state === 'pending') {
 }
 
 // --- AFTER: status + full evidence -------------------------------------------
-const statusAfter = parseMigrationStatus(runStatus())
-if (statusAfter.ambiguous) fail('ambiguous_status_after')
 const ledgerAfter = readLedger()
-const agreementAfter = evaluateStatusAgreement({ statusRows: statusAfter.rows, registered, ledger: ledgerAfter })
-if (!agreementAfter.ok) fail(`status_disagreement_after:${agreementAfter.reason}`)
+const statusAfter = runStatus()
+const checkedAfter = evaluateStatusRun({ ok: statusAfter.ok, text: statusAfter.text, registered, ledger: ledgerAfter })
+if (!checkedAfter.ok) fail(`status_after_failed:${checkedAfter.reason}`)
 
 const columns = readColumns()
 const schema = verifyOwnedSchema({ columns, constraints: readConstraints() })
