@@ -77,6 +77,37 @@ export function evaluateStatusAgreement({ statusRows, registered, ledger }) {
 }
 
 /**
+ * Require the status COMMAND to succeed before any parsing. `ok` is the child
+ * process success flag; a non-zero exit is rejected even if the output happens
+ * to contain a valid-looking status table.
+ */
+export function evaluateStatusRun({ ok, text, registered, ledger }) {
+  if (!ok) return { ok: false, reason: 'status_command_failed' }
+  const parsed = parseMigrationStatus(text)
+  if (parsed.ambiguous) return { ok: false, reason: 'ambiguous_status' }
+  return evaluateStatusAgreement({ statusRows: parsed.rows, registered, ledger })
+}
+
+/**
+ * psql row parsers matching the exact SQL serialization used by the preflight.
+ * `convalidated::text` serializes as `true`/`false` (NOT `t`/`f`).
+ */
+export function parseLedgerRow(line) {
+  const [id, name, batch, createdAt, updatedAt] = String(line).split('|')
+  return { id, name, batch: Number(batch), createdAt, updatedAt }
+}
+
+export function parseColumnRow(line) {
+  const [table, column, dataType, nullable] = String(line).split('|')
+  return { table, column, dataType, nullable }
+}
+
+export function parseConstraintRow(line) {
+  const parts = String(line).split('|')
+  return { table: parts[0], type: parts[1], validated: parts[2] === 'true', def: parts[3], columns: parts[4] ? parts[4].split(',') : [] }
+}
+
+/**
  * Decide the plan from the authoritative ledger rows
  * [{ id, name, batch, createdAt, updatedAt }].
  */
