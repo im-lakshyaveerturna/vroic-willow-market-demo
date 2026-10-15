@@ -115,7 +115,7 @@ const readColumns = () =>
   rows(psql("select table_name || '|' || column_name || '|' || data_type || '|' || is_nullable from information_schema.columns where table_schema = 'public' and table_name like 'vroic!_%' escape '!' order by table_name, ordinal_position")).map(parseColumnRow)
 
 const readConstraints = () =>
-  rows(psql("select r.relname || '|' || c.contype || '|' || c.convalidated::text || '|' || replace(pg_get_constraintdef(c.oid), chr(10), ' ') || '|' || coalesce((select string_agg(a.attname, ',' order by array_position(c.conkey, a.attnum)) from pg_attribute a where a.attrelid = c.conrelid and a.attnum = any(c.conkey)), '') from pg_constraint c join pg_class r on r.oid = c.conrelid join pg_namespace n on n.oid = r.relnamespace where n.nspname = 'public' and r.relname like 'vroic!_%' escape '!' order by r.relname, c.contype")).map(parseConstraintRow)
+  rows(psql("select r.relname || '|' || c.contype::text || '|' || c.convalidated::text || '|' || replace(pg_get_constraintdef(c.oid), chr(10), ' ') || '|' || coalesce((select string_agg(a.attname, ',' order by array_position(c.conkey, a.attnum)) from pg_attribute a where a.attrelid = c.conrelid and a.attnum = any(c.conkey)), '') from pg_constraint c join pg_class r on r.oid = c.conrelid join pg_namespace n on n.oid = r.relnamespace where n.nspname = 'public' and r.relname like 'vroic!_%' escape '!' order by r.relname, c.contype")).map(parseConstraintRow)
 
 const runStatus = () => {
   const r = runCaptured('pnpm', ['payload', 'migrate:status'], { env: { ...process.env, NODE_OPTIONS: '--no-deprecation' } })
