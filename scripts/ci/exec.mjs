@@ -12,6 +12,7 @@ export function runCaptured(file, args, options = {}) {
     const stdout = execFileSync(file, args, {
       encoding: 'utf8',
       maxBuffer: MAX_BUFFER,
+      stdio: ['pipe', 'pipe', 'pipe'],
       env: options.env ?? process.env,
       ...(options.input !== undefined ? { input: options.input } : {}),
     })
