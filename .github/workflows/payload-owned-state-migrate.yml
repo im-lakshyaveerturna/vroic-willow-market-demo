@@ -1,0 +1,100 @@
+name: payload-owned-state-migrate
+
+# Manual, reviewed dispatch only. This workflow runs the additive Payload
+# forward migration against the store's EXISTING external Postgres backend.
+# It never runs on push/PR and never migrates during a build.
+#
+# Untrusted dispatch inputs are NEVER interpolated into a shell. They are passed
+# as environment variables and validated strictly before any checkout, script or
+# secret exposure.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact main commit SHA the migration source is pinned to
+        required: true
+      migration_sha256:
+        description: SHA256 of the approved additive migration file
+        required: true
+      migration_inventory:
+        description: SHA256 of the complete reviewed pending-migration inventory
+        required: true
+      backend_fingerprint:
+        description: Trusted backend fingerprint (sha256, host/port/database/schema)
+        required: true
+      request_id:
+        description: Stable request identifier for this dispatch
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: payload-owned-state-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate dispatch identity (before checkout/scripts/secrets)
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          MIGRATION_SHA256: ${{ inputs.migration_sha256 }}
+          MIGRATION_INVENTORY: ${{ inputs.migration_inventory }}
+          BACKEND_FINGERPRINT: ${{ inputs.backend_fingerprint }}
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REPOSITORY_ID:-}" = "1416817036"
+          test "${GITHUB_REF:-}" = "refs/heads/main"
+          test "${GITHUB_REPOSITORY:-}" = "im-lakshyaveerturna/vroic-willow-market-demo"
+          printf '%s' "$SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$'
+          for value in "$MIGRATION_SHA256" "$MIGRATION_INVENTORY" "$BACKEND_FINGERPRINT"; do
+            printf '%s' "$value" | grep -Eq '^[a-f0-9]{64}$'
+          done
+          printf '%s' "$REQUEST_ID" | grep -Eq '^[a-zA-Z0-9._:-]{1,120}$'
+          echo "identity-ok repository=${GITHUB_REPOSITORY_ID} ref=${GITHUB_REF}"
+
+      - name: Checkout exact source (pinned main)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Verify checkout identity
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          echo "checkout-ok head=$SOURCE_SHA"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.1.0
+        with:
+          version: 11.8.0
+
+      - name: Setup Node
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.4.0
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Locked dependencies are installed BEFORE any secret is exposed.
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # Secrets are exposed only to the reviewed migration step.
+      - name: Reviewed additive migration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          MIGRATION_SHA256: ${{ inputs.migration_sha256 }}
+          MIGRATION_INVENTORY: ${{ inputs.migration_inventory }}
+          BACKEND_FINGERPRINT: ${{ inputs.backend_fingerprint }}
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: node scripts/ci/payload-migrate-preflight.mjs
