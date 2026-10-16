@@ -5,10 +5,10 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 import { OperationError, fail } from './errors'
 import {
-  IMPLEMENTED_OPERATIONS,
-  actionEffect,
+  CONTRACT_OPERATIONS,
+  contractOperation,
   handlerFor,
-  operationMeta,
+  unavailableReason,
 } from './operations'
 import {
   configuredApplicationId,
@@ -41,7 +41,7 @@ export const vroicDiscoveryEndpoint: Endpoint = {
   handler: async () =>
     Response.json({
       applicationId: configuredApplicationId() ?? null,
-      operations: IMPLEMENTED_OPERATIONS,
+      operations: CONTRACT_OPERATIONS,
     }),
 }
 
@@ -68,16 +68,21 @@ export const vroicOperationsEndpoint: Endpoint = {
       })
 
       const envelope = parseOperationEnvelope(rawBody, verified.idempotencyKey)
-      const meta = operationMeta(envelope.operation)
-      if (!meta) fail('unsupported_operation', 404, `Unsupported operation ${envelope.operation}`)
+      const contractOp = contractOperation(envelope.operation)
+      if (!contractOp) fail('unsupported_operation', 404, `Unsupported operation ${envelope.operation}`)
 
       const action = typeof envelope.arguments.action === 'string' ? envelope.arguments.action : undefined
       if (!action) fail('invalid_arguments', 400, 'action is required')
-      const effect = actionEffect(envelope.operation, action)
+      const denied = unavailableReason(envelope.operation, action)
+      if (denied) fail('operation_unavailable', 403, `operation_unavailable:${denied}`)
+      const effects = (contractOp.actionEffects as Record<string, 'read' | 'write'> | undefined) || {}
+      const effect = effects[action]
+      if (!effect) fail('unsupported_action', 404, `Unsupported action ${envelope.operation}.${action}`)
 
+      const roles = (contractOp.roles as readonly string[] | undefined) || ['OWNER', 'ADMIN']
       const link = await getPrincipalLink(req.payload, verified.actorId)
       if (!link) fail('actor_not_linked', 403)
-      if (!meta.roles.includes(link.role)) fail('actor_forbidden', 403)
+      if (!roles.includes(link.role)) fail('actor_forbidden', 403)
 
       const handler = handlerFor(envelope.operation, action)
       const ctx = {
