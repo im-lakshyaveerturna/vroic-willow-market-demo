@@ -45,6 +45,7 @@ import {
   resolveContactCase,
   updateWorkflowCase,
 } from './state'
+import contractJson from './storefront-commerce-contract.json'
 
 export type Effect = 'read' | 'write'
 
@@ -1166,6 +1167,41 @@ const HANDLERS: Record<string, Handler> = {
   'purchases.receive': purchasesReceive,
   'returns.get': returnsGet,
   'returns.receive_confirmed': returnsReceiveConfirmed,
+}
+
+interface ContractOperationShape {
+  name: string
+  actionEffects?: Record<string, 'read' | 'write'>
+  actionAvailability?: Record<string, { available: false; reason: string }>
+  [key: string]: unknown
+}
+
+// Single declaration authority: the complete retained contract catalog, with a
+// source-owned denial for EVERY action this adapter does not actually handle.
+// Availability is derived solely from the real handler registry (HANDLERS).
+const CONTRACT_SOURCE = (contractJson as unknown as { operations: ContractOperationShape[] }).operations
+
+export const CONTRACT_OPERATIONS = CONTRACT_SOURCE.map((op) => {
+  const effects = op.actionEffects || {}
+  const actionAvailability: Record<string, { available: false; reason: string }> = {}
+  for (const action of Object.keys(effects)) {
+    if (!HANDLERS[`${op.name}.${action}`]) {
+      actionAvailability[action] = { available: false, reason: 'provider_operation_unavailable' }
+    }
+  }
+  return Object.keys(actionAvailability).length > 0 ? { ...op, actionAvailability } : { ...op }
+})
+
+const CONTRACT_BY_NAME = new Map(CONTRACT_OPERATIONS.map((op) => [op.name, op]))
+
+export function contractOperation(name: string): ContractOperationShape | undefined {
+  return CONTRACT_BY_NAME.get(name) as ContractOperationShape | undefined
+}
+
+export function unavailableReason(name: string, action: string): string | undefined {
+  const op = CONTRACT_BY_NAME.get(name) as ContractOperationShape | undefined
+  const status = op?.actionAvailability?.[action]
+  return status && status.available === false ? status.reason : undefined
 }
 
 export function handlerFor(name: string, action: string): Handler {
