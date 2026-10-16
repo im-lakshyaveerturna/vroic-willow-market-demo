@@ -14,6 +14,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
+import { OrderConversation } from '@/components/OrderConversation'
 
 export const dynamic = 'force-dynamic'
 
@@ -193,6 +194,12 @@ export default async function Order({ params, searchParams }: PageProps) {
 
             {/* @ts-expect-error - some kind of type hell */}
             <AddressItem address={order.shippingAddress} hideActions />
+          </div>
+        )}
+
+        {user && (
+          <div>
+            <OrderConversation orderId={order.id} />
           </div>
         )}
       </div>
